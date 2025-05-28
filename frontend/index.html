@@ -1,0 +1,45 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Plataforma de Microredes Híbridas</title>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <h1>🌎 Plataforma de Microredes Híbridas</h1>
+
+  <section id="chatbot">
+    <h2>🤖 Asistente Inteligente</h2>
+    <input type="text" id="userInput" placeholder="Escribe tu pregunta aquí...">
+    <button onclick="sendQuestion()">Enviar</button>
+    <div id="chatResponse"></div>
+  </section>
+
+  <section id="formulario">
+    <h2>⚡ Diseña tu Microred</h2>
+    <form id="designForm">
+      <label>Ubicación:</label>
+      <input type="text" name="location" required><br>
+
+      <label>Consumo diario (kWh):</label>
+      <input type="number" name="consumo" required><br>
+
+      <label>Fuente preferida:</label>
+      <select name="fuente">
+        <option value="solar">Solar</option>
+        <option value="eolica">Eólica</option>
+        <option value="diesel">Diésel</option>
+      </select><br>
+
+      <button type="submit">Simular</button>
+    </form>
+
+    <div id="resultadoSimulacion"></div>
+  </section>
+
+  <script src="chatbot.js"></script>
+  <script src="diseño.js"></script>
+</body>
+</html>
