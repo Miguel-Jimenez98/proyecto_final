@@ -5,8 +5,8 @@ from fastapi.responses import JSONResponse, HTMLResponse
 import pandas as pd
 
 # Cargar datasets
-equipos_df = pd.read_csv("backend/catalogo_equipos.csv")
-zonas_df = pd.read_csv("backend/zonas_no_interconectadas.csv")
+equipos_df = pd.read_csv("catalogo_equipos.csv")
+zonas_df = pd.read_csv("zonas_no_interconectadas.csv")
 
 app = FastAPI(title="Plataforma de Microredes", version="1.0")
 
