@@ -69,9 +69,94 @@ def respuesta_semantica(pregunta_usuario):
 app = FastAPI(title="Plataforma de Microredes", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
+import re
+
+def extraer_consumo(texto):
+    """
+    Extrae un valor numérico seguido de 'kwh' del texto.
+    Soporta formatos como 6 kWh, 8.5kwh, 12,75 kWh, etc.
+    """
+    coincidencias = re.findall(r'(\d+[.,]?\d*)\s*kwh', texto.lower())
+    if coincidencias:
+        # Reemplaza coma por punto si es necesario
+        valor = coincidencias[0].replace(",", ".")
+        return float(valor)
+    return None
+def detectar_tipo_instalacion(texto):
+    """
+    Detecta el tipo de instalación mencionado en el texto y retorna un tipo y consumo estimado.
+    """
+    texto = texto.lower()
+    if "escuela" in texto or "colegio" in texto:
+        return "escuela rural", 10
+    elif "finca" in texto:
+        return "finca agrícola", 15
+    elif "casa" in texto or "hogar" in texto or "vivienda" in texto:
+        return "casa rural", 7
+    elif "salud" in texto or "puesto médico" in texto or "hospital" in texto:
+        return "puesto de salud", 12
+    elif "negocio" in texto or "tienda" in texto or "comercio" in texto:
+        return "negocio local", 9
+    return None, None
+
+
+
+def recomendar_fuente_energia(zona_nombre):
+    zona = zonas_df[zonas_df["Zona"].str.lower() == zona_nombre.lower()]
+    if zona.empty:
+        return None
+
+    datos = zona.iloc[0]
+    mensaje = f"En la zona de {datos['Zona']}, se recomienda principalmente "
+
+    solar = datos["Irradiacion_solar"] >= 5.5
+    eolica = datos["Velocidad_viento"] >= 4.5
+    hidrica = datos["Caudal_rio"] >= 80 and datos["Altura_salto"] >= 8
+
+    fuentes = []
+    if solar:
+        fuentes.append("energía solar")
+    if eolica:
+        fuentes.append("energía eólica")
+    if hidrica:
+        fuentes.append("energía hídrica (PCH)")
+
+    if fuentes:
+        return mensaje + " y ".join(fuentes) + " debido a sus condiciones locales."
+    else:
+        return f"En la zona de {datos['Zona']}, no se identificaron condiciones óptimas destacadas para energía solar, eólica o hídrica."
+
 @app.get("/chatbot", tags=["Chatbot"])
 def chatbot(query: str):
     query_lower = query.lower()
+    consumo_detectado = extraer_consumo(query_lower)
+    tipo_instalacion, consumo_estimado = detectar_tipo_instalacion(query_lower)
+    if tipo_instalacion:
+        if tipo_instalacion == "escuela rural":
+            respuesta = f"Para una {tipo_instalacion} con un consumo aproximado de {consumo_estimado} kWh/día, se recomienda una microred solar con baterías. También es aconsejable un generador diésel de respaldo para asegurar el suministro en días nublados o cortes prolongados."
+        elif tipo_instalacion == "finca agrícola":
+            respuesta = f"Para una {tipo_instalacion} que suele requerir energía para riego o refrigeración, con un consumo estimado de {consumo_estimado} kWh/día, lo ideal es un sistema solar con baterías. Si hay buen viento, puede complementarse con energía eólica. Un generador diésel es útil como respaldo."
+        elif tipo_instalacion == "casa rural":
+            respuesta = f"Una {tipo_instalacion} con un consumo promedio de {consumo_estimado} kWh/día puede funcionar bien con paneles solares y baterías. Si el área tiene viento constante, una turbina eólica puede ser un buen complemento."
+        elif tipo_instalacion == "puesto de salud":
+            respuesta = f"Para un {tipo_instalacion}, donde la continuidad del servicio es crítica, se recomienda una microred solar con baterías de alta capacidad, complementada con un generador diésel como respaldo para garantizar un suministro confiable."
+        elif tipo_instalacion == "negocio local":
+            respuesta = f"Un {tipo_instalacion} suele requerir un suministro estable, especialmente si opera refrigeración o equipos eléctricos. Un sistema solar con baterías puede cubrir la mayor parte del consumo estimado de {consumo_estimado} kWh/día. También es útil contar con una fuente de respaldo como generador diésel para continuidad en horarios extendidos."
+
+        return JSONResponse(content={"respuesta": respuesta})
+
+
+    
+    # Si detectamos un consumo y la pregunta es sobre inversores
+    if consumo_detectado and "inversor" in query_lower:
+        respuesta = f"Si tu consumo es de {consumo_detectado} kWh diarios, un inversor de al menos {round(consumo_detectado / 2, 1)} kW sería adecuado. Asegúrate de que sea compatible con tu sistema solar o eólico."
+        return JSONResponse(content={"respuesta": respuesta})
+
+    # También podemos responder sobre paneles
+    if consumo_detectado and "panel" in query_lower:
+        respuesta = f"Con un consumo de {consumo_detectado} kWh diarios, necesitarías aproximadamente {math.ceil((consumo_detectado * 1000) / 400 / 5)} paneles solares de 400 Wp en una zona con buena irradiación."
+        return JSONResponse(content={"respuesta": respuesta})
+
 
     # Reglas directas
     if "solar" in query_lower and "eólica" in query_lower:
@@ -127,6 +212,11 @@ def chatbot(query: str):
         respuesta = "En días nublados, las baterías o generadores aseguran energía."
     elif "ayuda" in query_lower or "no sé" in query_lower:
         respuesta = "Puedo ayudarte con solar, eólica, baterías o diésel. También puedes usar el simulador."
+        # Intentar detectar una zona y recomendar fuente de energía
+    for zona_nombre in zonas_df["Zona"]:
+        if zona_nombre.lower() in query_lower:
+            respuesta = recomendar_fuente_energia(zona_nombre)
+            return JSONResponse(content={"respuesta": respuesta})
     else:
         # Intentar con el modelo semántico
         respuesta = respuesta_semantica(query)
