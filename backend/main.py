@@ -1,3 +1,4 @@
+# Importaciones necesarias para la API y el manejo de datos
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
@@ -5,16 +6,18 @@ import pandas as pd
 import math
 import spacy
 
-# Cargar modelo spaCy español
+# Carga del modelo spaCy para el procesamiento en español
 nlp = spacy.load("es_core_news_md")
 
-# Datos
+# Carga de los archivos CSV que contienen los datos de equipos y zonas
+# También se convierte la capacidad de los equipos a valor numérico para facilitar cálculos
 equipos_df = pd.read_csv("catalogo_equipos.csv")
 zonas_df = pd.read_csv("zonas_no_interconectadas.csv")
 equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').astype(int)
 
-# Preguntas semánticas
+# Diccionario con preguntas frecuentes y sus respuestas asociadas (Preguntas semánticas)
 faq_semanticas = {
+    # Este bloque contiene preguntas y respuestas técnicas frecuentes sobre energías renovables
     "¿Qué es una microred híbrida?": "Una microred híbrida combina varias fuentes de energía (solar, eólica, diésel, etc.) para asegurar un suministro estable, especialmente útil en zonas aisladas.",
     "¿Qué tipo de batería me conviene?": "Las baterías de litio tienen mayor vida útil y eficiencia, pero son más costosas. Las de plomo-ácido son más económicas, pero requieren más mantenimiento.",
     "¿Cuál es la diferencia entre litio y plomo ácido?": "Las baterías de litio son más ligeras, duran más y requieren menos mantenimiento. Las de plomo-ácido son más baratas pero menos duraderas.",
@@ -50,9 +53,10 @@ faq_semanticas = {
     "¿Qué es la energía sostenible?": "La energía sostenible satisface las necesidades actuales sin comprometer las de futuras generaciones, integrando fuentes renovables, eficiencia energética y responsabilidad ambiental.",
     "¿Qué es la energía alternativa?": "La energía alternativa engloba fuentes de energía diferentes a las convencionales, como la solar, eólica, geotérmica y biomasa, que ofrecen opciones más sostenibles y menos contaminantes."
 }
-
+# Preprocesamiento de preguntas con spaCy para usar similitud semántica
 faq_semantica_docs = [(nlp(preg), resp) for preg, resp in faq_semanticas.items()]
 
+# Función que compara la pregunta del usuario con las preguntas frecuentes mediante similitud semántica
 def respuesta_semantica(pregunta_usuario):
     doc_usuario = nlp(pregunta_usuario)
     mejor_similitud = 0
@@ -65,12 +69,13 @@ def respuesta_semantica(pregunta_usuario):
     return mejor_respuesta if mejor_similitud >= 0.65 else None
 
 
-# FastAPI
+# Inicialización de la API con FastAPI y configuración de CORS para permitir conexiones externas
 app = FastAPI(title="Plataforma de Microredes", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
 import re
 
+# Función auxiliar para extraer valores numéricos de consumo (kWh) del texto del usuario
 def extraer_consumo(texto):
     """
     Extrae un valor numérico seguido de 'kwh' del texto.
@@ -82,6 +87,8 @@ def extraer_consumo(texto):
         valor = coincidencias[0].replace(",", ".")
         return float(valor)
     return None
+
+# Función para detectar el tipo de instalación mencionada y devolver un tipo y consumo estimado
 def detectar_tipo_instalacion(texto):
     """
     Detecta el tipo de instalación mencionado en el texto y retorna un tipo y consumo estimado.
@@ -100,7 +107,7 @@ def detectar_tipo_instalacion(texto):
     return None, None
 
 
-
+# Función que recomienda una fuente de energía según las condiciones técnicas de la zona especificada
 def recomendar_fuente_energia(zona_nombre):
     zona = zonas_df[zonas_df["Zona"].str.lower() == zona_nombre.lower()]
     if zona.empty:
@@ -109,6 +116,7 @@ def recomendar_fuente_energia(zona_nombre):
     datos = zona.iloc[0]
     mensaje = f"En la zona de {datos['Zona']}, se recomienda principalmente "
 
+    # Evaluación de condiciones locales para recomendar una o más fuentes de energía
     solar = datos["Irradiacion_solar"] >= 5.5
     eolica = datos["Velocidad_viento"] >= 4.5
     hidrica = datos["Caudal_rio"] >= 80 and datos["Altura_salto"] >= 8
@@ -126,11 +134,14 @@ def recomendar_fuente_energia(zona_nombre):
     else:
         return f"En la zona de {datos['Zona']}, no se identificaron condiciones óptimas destacadas para energía solar, eólica o hídrica."
 
+# Ruta principal del chatbot. Analiza la consulta del usuario y responde según reglas o similitud semántica
 @app.get("/chatbot", tags=["Chatbot"])
 def chatbot(query: str):
     query_lower = query.lower()
     consumo_detectado = extraer_consumo(query_lower)
     tipo_instalacion, consumo_estimado = detectar_tipo_instalacion(query_lower)
+    
+    # Respuestas personalizadas según el tipo de instalación detectada
     if tipo_instalacion:
         if tipo_instalacion == "escuela rural":
             respuesta = f"Para una {tipo_instalacion} con un consumo aproximado de {consumo_estimado} kWh/día, se recomienda una microred solar con baterías. También es aconsejable un generador diésel de respaldo para asegurar el suministro en días nublados o cortes prolongados."
@@ -147,7 +158,7 @@ def chatbot(query: str):
 
 
     
-    # Si detectamos un consumo y la pregunta es sobre inversores
+    # Reglas personalizadas si se detecta un consumo y la pregunta incluye "inversor" o "panel"
     if consumo_detectado and "inversor" in query_lower:
         respuesta = f"Si tu consumo es de {consumo_detectado} kWh diarios, un inversor de al menos {round(consumo_detectado / 2, 1)} kW sería adecuado. Asegúrate de que sea compatible con tu sistema solar o eólico."
         return JSONResponse(content={"respuesta": respuesta})
@@ -158,7 +169,7 @@ def chatbot(query: str):
         return JSONResponse(content={"respuesta": respuesta})
 
 
-    # Reglas directas
+    # Reglas directas por combinación de palabras clave
     if "solar" in query_lower and "eólica" in query_lower:
         respuesta = "La energía solar es más estable en zonas con alta irradiación como La Guajira, mientras que la eólica es útil en lugares con vientos constantes. Ambas pueden complementarse en un sistema híbrido."
     elif "eólica" in query_lower and "pch" in query_lower:
@@ -218,30 +229,33 @@ def chatbot(query: str):
             respuesta = recomendar_fuente_energia(zona_nombre)
             return JSONResponse(content={"respuesta": respuesta})
     else:
-        # Intentar con el modelo semántico
+        # Si ninguna regla se cumple, se intenta buscar una respuesta por similitud semántica
         respuesta = respuesta_semantica(query)
         if not respuesta:
             respuesta = "Estoy aquí para ayudarte con microredes híbridas. Pregúntame sobre paneles, baterías, viento o zonas recomendadas."
 
     return JSONResponse(content={"respuesta": respuesta})
 
-
+# Ruta para simular una configuración energética basada en zona y consumo
 @app.get("/simulador", tags=["Simulador"])
 def simulador(location: str, consumo: float):
     zona = zonas_df[zonas_df["Zona"].str.lower() == location.lower()]
     if zona.empty:
         raise HTTPException(status_code=404, detail="Ubicación no encontrada")
-
+    
+    # Datos de la zona seleccionada y condiciones para simulación
     zona_info = zona.iloc[0]
     irradiacion = float(zona_info["Irradiacion_solar"])
     viento = float(zona_info["Velocidad_viento"])
 
+    # Selección de equipos desde el catálogo
     panel = equipos_df[equipos_df["Tipo"] == "Panel Solar"].iloc[0]
     bateria = equipos_df[equipos_df["Tipo"] == "Batería"].iloc[0]
     inversor = equipos_df[equipos_df["Tipo"] == "Inversor"].iloc[0]
     eolica = equipos_df[equipos_df["Tipo"] == "Turbina Eólica"].iloc[0]
     diesel = equipos_df[equipos_df["Tipo"] == "Generador Diésel"].iloc[0]
 
+    # Cálculos para estimar la cantidad de paneles, baterías, turbinas eólicas y generador diésel necesarios
     consumo_diario_wh = consumo * 1000
     n_paneles = math.ceil(consumo_diario_wh / int(panel["Capacidad_num"]) / irradiacion)
     n_baterias = math.ceil(consumo_diario_wh * 2 / int(bateria["Capacidad_num"]))
@@ -261,6 +275,7 @@ def simulador(location: str, consumo: float):
 
     return {
         "zona": str(zona_info["Zona"]),
+        # Datos de entrada y recomendaciones técnicas, incluyendo costos estimados
         "irradiacion_solar": irradiacion,
         "viento": viento,
         "consumo_diario_kwh": consumo,
