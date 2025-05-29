@@ -1,4 +1,3 @@
-
 async function sendQuestion() {
   const input = document.getElementById("userInput").value;
   const responseDiv = document.getElementById("chatResponse");
