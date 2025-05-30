@@ -1,6 +1,17 @@
-Tipo,Modelo,Capacidad,Precio (USD)
-Panel Solar,PS-400,400W,150
-Batería,BAT-2.4kWh,2400Wh,300
-Inversor,INV-5kW,5000W,500
-Turbina Eólica,EOL-3kW,3000W,1200
-Generador Diésel,GEN-5kW,5000W,900
+Tipo,Modelo,Capacidad,Precio (USD),Eficiencia,Tecnología,Fuente
+Panel Solar,Canadian Solar CS6R-400MS,400W,150,20.5,Monocristalino PERC,Canadian Solar
+Panel Solar,JA Solar JAM60S20-390/MR,390W,140,20.3,Monocristalino PERC,JA Solar
+Panel Solar,Trina Solar TSM-405-DE09R.08,405W,155,20.7,Monocristalino PERC,Trina Solar
+Batería,CATL LFP-2.4kWh,2400Wh,300,95,Litio (LFP),CATL
+Batería,Tesla Powerwall 2,13500Wh,7500,90,Litio (NMC),Tesla
+Batería,BYD B-Box LV,10240Wh,5000,95,Litio (LFP),BYD
+Inversor,Growatt MAC 36KTL3-XL,36000W,3200,98.8,On-Grid,Growatt
+Inversor,Huawei SUN2000-33KTL-A,33000W,3100,98.6,On-Grid,Huawei
+Inversor,SMA Sunny Tripower 25000TL,25000W,2800,98.4,On-Grid,SMA
+Turbina Eólica,CHUNTIANMEI 500W,500W,800,35,Eje horizontal,Amazon
+Turbina Eólica,Enair E200,20000W,12000,40,Eje horizontal,Enair
+Turbina Eólica,Shanghai Electric 4MW,4000000W,3000000,45,Eje horizontal,Shanghai Electric
+Generador Diésel,FG Wilson P13.5-6,13500W,5000,35,4 tiempos,FG Wilson
+Generador Diésel,Cummins C22D5,22000W,6000,36,4 tiempos,Cummins
+Generador Diésel,Genergy GE8000GE,8000W,2500,34,4 tiempos,Genergy
+
