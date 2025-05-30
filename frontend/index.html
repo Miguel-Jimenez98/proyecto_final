@@ -25,6 +25,15 @@
     <label>Consumo diario (kWh):</label>
     <input type="number" name="consumo" step="any" required><br>
 
+    <label>
+      <input type="checkbox" id="incluirAutonomia"> Incluir autonomía energética
+    </label><br>
+
+    <label id="diasAutonomiaLabel" style="display:none;">
+      Días de autonomía:
+      <input type="number" id="diasAutonomia" name="autonomia" min="1" value="2">
+    </label><br>
+
     <button type="submit">Simular</button>
   </form>
 
@@ -33,5 +42,10 @@
 
   <script src="chatbot.js"></script>
   <script src="diseño.js"></script>
+  <script>
+  document.getElementById("incluirAutonomia").addEventListener("change", function() {
+    document.getElementById("diasAutonomiaLabel").style.display = this.checked ? "block" : "none";
+  });
+</script>
 </body>
 </html>

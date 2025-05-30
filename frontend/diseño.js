@@ -4,8 +4,18 @@ document.getElementById("designForm").addEventListener("submit", async function(
   const location = formData.get("location");
   const consumo = formData.get("consumo");
   const fuente = formData.get("fuente");
+  
+  // 🔧 MODIFICACIÓN: Construcción dinámica de la URL
+  const incluirAutonomia = document.getElementById("incluirAutonomia").checked;
+  const diasAutonomia = document.getElementById("diasAutonomia").value;
 
-  const res = await fetch(`http://localhost:8000/simulador?location=${location}&consumo=${consumo}`);
+  let url = `http://localhost:8000/simulador?location=${location}&consumo=${consumo}`;
+  if (incluirAutonomia) {
+  url += `&incluir_autonomia=true&autonomia=${diasAutonomia}`;
+}
+
+  const res = await fetch(url);
+
   const data = await res.json();
 
   const resultadoDiv = document.getElementById("resultadoSimulacion");
@@ -31,5 +41,8 @@ document.getElementById("designForm").addEventListener("submit", async function(
       <li><strong>Diésel:</strong> $${data.costos_estimados_usd.diesel}</li>
       <li><strong>Total:</strong> <strong>$${data.costos_estimados_usd.total}</strong></li>
     </ul>
+      <p style="font-size: 0.9em; font-style: italic; color: #555;">
+      Los cálculos consideran pérdidas por eficiencia del inversor (95%) y del cableado (97%).
+    </p>
   `;
 });

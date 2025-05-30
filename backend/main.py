@@ -1,10 +1,12 @@
 # Importaciones necesarias para la API y el manejo de datos
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
 import pandas as pd
 import math
 import spacy
+import re
+import unicodedata
 
 # Carga del modelo spaCy para el procesamiento en español
 nlp = spacy.load("es_core_news_md")
@@ -16,6 +18,7 @@ equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').asty
 equipos_df["Eficiencia"] = equipos_df["Eficiencia"].astype(float)
 
 zonas_df = pd.read_csv("zonas_no_interconectadas.csv")
+zonas_df["Zona"] = zonas_df["Zona"].str.strip()  # Eliminar espacios extra
 equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').astype(int)
 
 # Diccionario con preguntas frecuentes y sus respuestas asociadas (Preguntas semánticas)
@@ -76,10 +79,7 @@ def respuesta_semantica(pregunta_usuario):
 app = FastAPI(title="Plataforma de Microredes", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-import re
-import unicodedata
-
-
+# Normalización del texto para comparación robusta
 def normalizar_texto(texto):
     return ''.join(
         c for c in unicodedata.normalize('NFD', texto)
@@ -273,8 +273,16 @@ def chatbot(query: str):
 
 # Ruta para simular una configuración energética basada en zona y consumo
 @app.get("/simulador", tags=["Simulador"])
-def simulador(location: str, consumo: float):
-    zona = zonas_df[zonas_df["Zona"].str.lower() == location.lower()]
+def simulador(
+    location: str,
+    consumo: float,
+    incluir_autonomia: bool = Query(False),
+    autonomia: int = Query(2, ge=1)
+):
+    location_normalizada = normalizar_texto(location)
+    zonas_df["Zona_normalizada"] = zonas_df["Zona"].apply(normalizar_texto)
+
+    zona = zonas_df[zonas_df["Zona_normalizada"].str.contains(location_normalizada, na=False)]
     if zona.empty:
         raise HTTPException(status_code=404, detail="Ubicación no encontrada")
     
@@ -294,13 +302,28 @@ def simulador(location: str, consumo: float):
     eficiencia_bateria = bateria["Eficiencia"] / 100
     eficiencia_eolica = eolica["Eficiencia"] / 100
     
-    consumo_diario_wh = consumo * 1000
+    # Definimos la eficiencia del inversor (95%) y del cableado (97%)
+    # Estas eficiencias representan la proporción de energía que realmente llega al sistema luego de las pérdidas por conversión y distribución
+    eficiencia_inversor = 0.95
+    eficiencia_cableado = 0.97
+    # Ajustamos el consumo requerido para compensar las pérdidas por conversión
+    # Si el usuario necesita 6.5 kWh, debemos generar más para cubrir lo que se pierde en el inversor y el cableado
+    consumo_real = consumo / (eficiencia_inversor * eficiencia_cableado)
+    # Convertimos el consumo real de kWh a Wh para los cálculos posteriores
+    consumo_diario_wh = consumo_real * 1000
 
     # Cálculo paneles considerando eficiencia
     n_paneles = math.ceil(consumo_diario_wh / (panel["Capacidad_num"] * irradiacion * eficiencia_panel))
     
-    # Baterías considerando eficiencia de almacenamiento
-    n_baterias = math.ceil((consumo_diario_wh * 2) / (bateria["Capacidad_num"] * eficiencia_bateria))
+    # ⚡️ Solo se calcula autonomía si el usuario lo pide
+    if incluir_autonomia:
+        energia_autonomia_wh = consumo_diario_wh * autonomia
+    else:
+        energia_autonomia_wh = 0
+    energia_total_bateria = consumo_diario_wh + energia_autonomia_wh
+
+    # Número de baterías necesarias para cubrir la autonomía deseada
+    n_baterias = math.ceil(energia_total_bateria / (bateria["Capacidad_num"] * eficiencia_bateria))
     
     costo_solar = (n_paneles * float(panel["Precio (USD)"])) + (n_baterias * float(bateria["Precio (USD)"])) + float(inversor["Precio (USD)"])
 
@@ -323,6 +346,7 @@ def simulador(location: str, consumo: float):
         "irradiacion_solar": irradiacion,
         "viento": viento,
         "consumo_diario_kwh": consumo,
+        "nota": "Los cálculos consideran pérdidas por eficiencia del inversor (95%) y del cableado (97%).",
         "configuracion_recomendada": {
             "paneles_solares": int(n_paneles),
             "baterias": int(n_baterias),
