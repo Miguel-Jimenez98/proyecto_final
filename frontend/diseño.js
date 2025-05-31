@@ -1,3 +1,7 @@
+let graficoCostos; // Para controlar y actualizar el gráfico si ya existe
+let graficoContribucion; // Para controlar el gráfico tipo doughnut
+
+
 document.getElementById("designForm").addEventListener("submit", async function(e) {
   e.preventDefault();
   const formData = new FormData(e.target);
@@ -65,4 +69,103 @@ document.getElementById("designForm").addEventListener("submit", async function(
       <li><strong>Total:</strong> <strong>$${data.costos_estimados_usd.total}</strong></li>
     </ul>
   `;
+
+    // 🎯 Generar gráfico de barras con Chart.js
+  const ctx = document.getElementById("graficoCostos").getContext("2d");
+
+  // Si ya existe un gráfico previo, lo destruimos antes de crear uno nuevo
+  if (graficoCostos) {
+    graficoCostos.destroy();
+  }
+
+  const costos = data.costos_estimados_usd;
+
+  graficoCostos = new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: ["Solar", "Eólica", "Diésel"],
+      datasets: [{
+        label: "Costo estimado (USD)",
+        data: [
+          costos.solar,
+          costos.eolica === "No aplica" ? 0 : costos.eolica,
+          costos.diesel
+        ],
+        backgroundColor: ["#f1c40f", "#3498db", "#95a5a6"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          display: false
+        },
+        tooltip: {
+          callbacks: {
+            label: (context) => `$${context.raw}`
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: {
+            display: true,
+            text: "USD"
+          }
+        }
+      }
+    }
+  });
+
+// 🎯 Segundo gráfico: Distribución porcentual de costos
+const ctx2 = document.getElementById("graficoContribucion").getContext("2d");
+
+// Destruir gráfico anterior si existe
+if (graficoContribucion) {
+  graficoContribucion.destroy();
+}
+
+// Calculamos solo los valores numéricos válidos
+const costoSolar = costos.solar || 0;
+const costoEolica = costos.eolica === "No aplica" ? 0 : costos.eolica;
+const costoDiesel = costos.diesel || 0;
+const total = costoSolar + costoEolica + costoDiesel;
+
+// Validar si hay algo que graficar
+if (total > 0) {
+  const porcentajes = [
+    ((costoSolar / total) * 100).toFixed(1),
+    ((costoEolica / total) * 100).toFixed(1),
+    ((costoDiesel / total) * 100).toFixed(1)
+  ];
+
+  graficoContribucion = new Chart(ctx2, {
+    type: "doughnut",
+    data: {
+      labels: [
+        `Solar (${porcentajes[0]}%)`,
+        `Eólica (${porcentajes[1]}%)`,
+        `Diésel (${porcentajes[2]}%)`
+      ],
+      datasets: [{
+        label: "Distribución porcentual",
+        data: [costoSolar, costoEolica, costoDiesel],
+        backgroundColor: ["#f1c40f", "#3498db", "#95a5a6"]
+      }]
+    },
+    options: {
+      plugins: {
+        tooltip: {
+          callbacks: {
+            label: (context) => `${context.label}: $${context.raw}`
+          }
+        }
+      }
+    }
+  });
+}
+
 });
+
+

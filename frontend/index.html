@@ -5,7 +5,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Plataforma de Microredes Híbridas</title>
   <link rel="stylesheet" href="styles.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
+
 <body>
   <h1>🌎 Plataforma de Microredes Híbridas</h1>
 
@@ -48,6 +50,16 @@
   </form>
 
   <div id="resultadoSimulacion"></div>
+
+  <div style="margin-top: 20px;">
+    <h4>📊 Gráfico de Costos</h4>
+    <canvas id="graficoCostos" width="400" height="300"></canvas>
+  </div>
+  <div style="margin-top: 20px;">
+  <h4>🔄 Distribución de Costos por Fuente</h4>
+  <canvas id="graficoContribucion" width="400" height="300"></canvas>
+  </div>
+
 </section>
 
   <script src="chatbot.js"></script>
