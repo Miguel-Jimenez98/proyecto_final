@@ -3,20 +3,34 @@ document.getElementById("designForm").addEventListener("submit", async function(
   const formData = new FormData(e.target);
   const location = formData.get("location");
   const consumo = formData.get("consumo");
+  const perfil = formData.get("perfil");
   const fuente = formData.get("fuente");
   
   // 🔧 MODIFICACIÓN: Construcción dinámica de la URL
   const incluirAutonomia = document.getElementById("incluirAutonomia").checked;
   const diasAutonomia = document.getElementById("diasAutonomia").value;
 
-  let url = `http://localhost:8000/simulador?location=${location}&consumo=${consumo}`;
+  let url = `http://localhost:8000/simulador?location=${encodeURIComponent(location)}`;
+  if (consumo) url += `&consumo=${consumo}`;
+  if (perfil) url += `&perfil=${perfil}`;
   if (incluirAutonomia) {
   url += `&incluir_autonomia=true&autonomia=${diasAutonomia}`;
 }
 
-  const res = await fetch(url);
+  let data;
+  try {
+    const res = await fetch(url);
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.detail || "Error desconocido");
+    }
+    data = await res.json();
+  } catch (err) {
+    const resultadoDiv = document.getElementById("resultadoSimulacion");
+    resultadoDiv.innerHTML = `<p style="color: red;"><strong>❌ Error:</strong> ${err.message}</p>`;
+    return; // Detener ejecución si hubo error
+  }
 
-  const data = await res.json();
 
   const resultadoDiv = document.getElementById("resultadoSimulacion");
 
@@ -25,6 +39,15 @@ document.getElementById("designForm").addEventListener("submit", async function(
     <p><strong>Irradiación Solar:</strong> ${data.irradiacion_solar} kWh/m²/día</p>
     <p><strong>Velocidad del Viento:</strong> ${data.viento} m/s</p>
     <p><strong>Consumo Diario:</strong> ${data.consumo_diario_kwh} kWh</p>
+    ${data.nota
+      ? `<p style="${
+          data.nota.includes("⚠️")
+            ? "color: #e67e22; font-weight: bold;"
+            : "font-size: 0.9em; font-style: italic; color: #555;"
+        }"><strong>Nota:</strong> ${data.nota}</p>`
+    : ""}
+    ${data.consumo_estimado ? "<p style='color: #aa7700; font-style: italic;'>⚠️ El consumo fue estimado automáticamente según el perfil seleccionado.</p>" : ""}
+
 
     <h4>⚙️ Configuración Recomendada</h4>
     <ul>
@@ -41,8 +64,5 @@ document.getElementById("designForm").addEventListener("submit", async function(
       <li><strong>Diésel:</strong> $${data.costos_estimados_usd.diesel}</li>
       <li><strong>Total:</strong> <strong>$${data.costos_estimados_usd.total}</strong></li>
     </ul>
-      <p style="font-size: 0.9em; font-style: italic; color: #555;">
-      Los cálculos consideran pérdidas por eficiencia del inversor (95%) y del cableado (97%).
-    </p>
   `;
 });

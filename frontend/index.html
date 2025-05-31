@@ -23,7 +23,17 @@
     <input type="text" name="location" required><br>
 
     <label>Consumo diario (kWh):</label>
-    <input type="number" name="consumo" step="any" required><br>
+    <input type="number" name="consumo" step="any"><br>
+
+    <label>Perfil de instalación (opcional):</label>
+    <select name="perfil">
+      <option value="">-- Selecciona un perfil --</option>
+      <option value="casa">Casa</option>
+      <option value="escuela">Escuela</option>
+      <option value="finca">Finca</option>
+      <option value="negocio">Negocio</option>
+      <option value="salud">Centro de Salud</option>
+    </select><br>
 
     <label>
       <input type="checkbox" id="incluirAutonomia"> Incluir autonomía energética

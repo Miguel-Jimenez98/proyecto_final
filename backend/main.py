@@ -6,6 +6,7 @@ import pandas as pd
 import math
 import spacy
 import re
+from difflib import get_close_matches #Importamos función que compara texto y retorna los elementos más similares dentro de la lista
 import unicodedata
 
 # Carga del modelo spaCy para el procesamiento en español
@@ -86,6 +87,19 @@ def normalizar_texto(texto):
         if unicodedata.category(c) != 'Mn'
     ).lower()
 
+#Función para encontrar zona más parecida en caso de que el usuario cometa errores menores en la escritura (Búsqueda difusa de zonas)
+def buscar_zona_similar(nombre_zona_usuario):
+    nombre_normalizado = normalizar_texto(nombre_zona_usuario)
+    zonas_normalizadas = zonas_df["Zona"].apply(normalizar_texto)
+    coincidencias = get_close_matches(nombre_normalizado, zonas_normalizadas, n=1, cutoff=0.6)
+
+    if coincidencias:
+        # Devuelve el nombre original (sin normalizar) que le corresponde
+        idx = zonas_normalizadas[zonas_normalizadas == coincidencias[0]].index[0]
+        return zonas_df.loc[idx]
+    else:
+        return None
+
 # Función auxiliar para extraer valores numéricos de consumo (kWh) del texto del usuario
 def extraer_consumo(texto):
     """
@@ -106,13 +120,13 @@ def detectar_tipo_instalacion(texto):
     """
     texto = normalizar_texto(texto)
     if "escuela" in texto or "colegio" in texto:
-        return "escuela rural", 10
+        return "escuela rural", 20
     elif "finca" in texto:
         return "finca agricola", 15
     elif "casa" in texto or "hogar" in texto or "vivienda" in texto:
-        return "casa rural", 7
+        return "casa rural", 9
     elif "salud" in texto or "puesto medico" in texto or "hospital" in texto:
-        return "puesto de salud", 12
+        return "puesto de salud", 120
     elif "negocio" in texto or "tienda" in texto or "comercio" in texto:
         return "negocio local", 9
     return None, None
@@ -270,25 +284,68 @@ def chatbot(query: str):
     else:
         return JSONResponse(content={"respuesta": "Estoy aquí para ayudarte con microredes híbridas. Pregúntame sobre paneles, baterías, viento o zonas recomendadas."})
 
+# Función auxiliar para asignar consumo según perfil
+def obtener_consumo_por_perfil(perfil):
+    perfiles = {
+        "casa": 9,
+        "escuela": 20,
+        "finca": 15,
+        "negocio": 18,
+        "salud": 120
+    }
+    return perfiles.get(perfil.lower(), None)
 
-# Ruta para simular una configuración energética basada en zona y consumo
+# Ruta para simular una configuración energética basada en zona, consumo o perfil
 @app.get("/simulador", tags=["Simulador"])
 def simulador(
     location: str,
-    consumo: float,
+    consumo: float = Query(None),
     incluir_autonomia: bool = Query(False),
-    autonomia: int = Query(2, ge=1)
+    autonomia: int = Query(2, ge=1),
+    perfil: str = Query(None)
 ):
+    
     location_normalizada = normalizar_texto(location)
-    zonas_df["Zona_normalizada"] = zonas_df["Zona"].apply(normalizar_texto)
-
-    zona = zonas_df[zonas_df["Zona_normalizada"].str.contains(location_normalizada, na=False)]
-    if zona.empty:
+    zona_info = buscar_zona_similar(location)
+    if zona_info is None:
         raise HTTPException(status_code=404, detail="Ubicación no encontrada")
     
-    zona_info = zona.iloc[0]
+    # Si no se proporciona consumo, intentar obtenerlo por perfil
+    consumo_estimado = False
+    if consumo is None and perfil:
+        consumo = obtener_consumo_por_perfil(perfil)
+        if consumo is None:
+            raise HTTPException(status_code=400, detail="Perfil de instalación no reconocido. Usa: casa, escuela, finca, salud o negocio.")
+        consumo_estimado = True
+    elif consumo is None:
+        raise HTTPException(status_code=400, detail="Debes indicar un consumo o un perfil de instalación.")
+
+    
     irradiacion = float(zona_info["Irradiacion_solar"])
     viento = float(zona_info["Velocidad_viento"])
+    
+    # Validación: si el consumo es 0 o menor, no tiene sentido calcular equipos
+    if consumo <= 0:
+        return {
+            "zona": str(zona_info["Zona"]),
+            "irradiacion_solar": irradiacion,
+            "viento": viento,
+            "consumo_diario_kwh": consumo,
+            "nota": "⚠️ No se requiere instalación ya que el consumo diario es 0 kWh.",
+            "configuracion_recomendada": {
+                "paneles_solares": 0,
+                "baterias": 0,
+                "turbinas_eolicas": 0,
+                "incluir_diesel": False
+            },
+            "costos_estimados_usd": {
+                "solar": 0,
+                "eolica": 0,
+                "diesel": 0,
+                "total": 0
+            },
+            "consumo_estimado": False
+        }
     
     # Selección de los equipos (elegimos el primero por tipo como hasta ahora)
     panel = equipos_df[equipos_df["Tipo"] == "Panel Solar"].iloc[0]
@@ -301,11 +358,11 @@ def simulador(
     eficiencia_panel = panel["Eficiencia"] / 100
     eficiencia_bateria = bateria["Eficiencia"] / 100
     eficiencia_eolica = eolica["Eficiencia"] / 100
-    
     # Definimos la eficiencia del inversor (95%) y del cableado (97%)
     # Estas eficiencias representan la proporción de energía que realmente llega al sistema luego de las pérdidas por conversión y distribución
     eficiencia_inversor = 0.95
     eficiencia_cableado = 0.97
+    
     # Ajustamos el consumo requerido para compensar las pérdidas por conversión
     # Si el usuario necesita 6.5 kWh, debemos generar más para cubrir lo que se pierde en el inversor y el cableado
     consumo_real = consumo / (eficiencia_inversor * eficiencia_cableado)
@@ -340,7 +397,7 @@ def simulador(
     costo_diesel = float(diesel["Precio (USD)"])
     
     costo_total = costo_solar + costo_eolica + costo_diesel
-
+    
     return {
         "zona": str(zona_info["Zona"]),
         "irradiacion_solar": irradiacion,
@@ -358,6 +415,7 @@ def simulador(
             "eolica": round(costo_eolica, 2) if incluye_eolica else "No aplica",
             "diesel": round(costo_diesel, 2),
             "total": round(costo_total, 2)
-        }
+        },
+        "consumo_estimado": consumo_estimado
     }
 
