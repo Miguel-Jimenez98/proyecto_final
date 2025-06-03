@@ -173,6 +173,22 @@ def chatbot(query: str):
     consumo_detectado = extraer_consumo(query_lower)
     tipo_instalacion, consumo_estimado = detectar_tipo_instalacion(query_lower)
     
+    #NUEVAS RESPUESTAS RELACIONADAS CON VARIABLES DEL ENTORNO
+    if "acceso" in query_lower or "camino" in query_lower or "dificil" in query_lower:
+        return JSONResponse(content={"respuesta": "En zonas con acceso difícil, es importante tener en cuenta los costos logísticos y la dificultad de transporte de equipos. El simulador te mostrará si la zona seleccionada tiene este tipo de limitación."})
+
+    if "pch" in query_lower or "hidroeléctrica" in query_lower or "agua" in query_lower:
+        return JSONResponse(content={"respuesta": "Si una zona tiene alto potencial para pequeñas centrales hidroeléctricas (PCH), el simulador lo indicará. Esto es útil si hay fuentes de agua disponibles y un caudal suficiente."})
+
+    if "clima" in query_lower or "lluvia" in query_lower or "nubes" in query_lower:
+        return JSONResponse(content={"respuesta": "El tipo de clima influye en la generación solar y en el mantenimiento de los equipos. Por ejemplo, climas ecuatoriales o húmedos pueden requerir más mantenimiento."})
+
+    if "demanda" in query_lower or "crecimiento" in query_lower or "futuro" in query_lower:
+        return JSONResponse(content={"respuesta": "Zonas con demanda creciente pueden beneficiarse de sistemas sobredimensionados, para evitar quedarse cortos en el futuro. El simulador te da recomendaciones si detecta esta condición."})
+
+    if "observación" in query_lower or "característica" in query_lower or "particular" in query_lower:
+        return JSONResponse(content={"respuesta": "Cada zona tiene observaciones específicas que el simulador muestra. Estas pueden incluir aspectos geográficos, logísticos o sociales importantes a tener en cuenta."})
+
     # Respuestas personalizadas según el tipo de instalación detectada
     if tipo_instalacion:
         if tipo_instalacion == "escuela rural":
@@ -261,9 +277,20 @@ def chatbot(query: str):
         return JSONResponse(content={"respuesta": "En días nublados, las baterías o generadores aseguran energía."})
     elif "ayuda" in query_lower or "no se" in query_lower:
         return JSONResponse(content={"respuesta": "Puedo ayudarte con solar, eólica, baterías o diésel. También puedes usar el simulador."})
-            # Intentar detectar una zona y recomendar fuente de energía
+    
+    # ✅ Mostrar observaciones específicas si se pregunta por ellas
+    for i, fila in zonas_df.iterrows():
+        zona_normalizada = normalizar_texto(fila["Zona"])
+        if zona_normalizada in query_lower and any(palabra in query_lower for palabra in ["observacion", "observación", "caracteristica", "característica", "particularidad"]):
+            observacion = fila.get("Observaciones", "")
+            if observacion:
+                return JSONResponse(content={"respuesta": f"Las observaciones sobre {fila['Zona']} son: {observacion}."})
+            else:
+                return JSONResponse(content={"respuesta": f"No hay observaciones especiales registradas para {fila['Zona']}."})
+    
+    # Intentar detectar una zona y recomendar fuente de energía
     for zona_nombre in zonas_df["Zona"]:
-        if zona_nombre.lower() in query_lower:
+        if normalizar_texto(zona_nombre) in query_lower:
             respuesta = recomendar_fuente_energia(zona_nombre)
             return JSONResponse(content={"respuesta": respuesta})
 
@@ -274,7 +301,7 @@ def chatbot(query: str):
     "energia", "generador", "offgrid", "autonomia", "sistema hibrido", "zona", "instalacion"
     ]
 
-    if not any(palabra in query_lower for palabra in palabras_clave_microred):
+    if not any(palabra in query_lower for palabra in [normalizar_texto(p) for p in palabras_clave_microred]):
         return JSONResponse(content={"respuesta": "Estoy diseñado para ayudarte con temas de microredes híbridas: paneles solares, baterías, turbinas eólicas o generadores. ¿Cómo puedo ayudarte?"})
 
 # Si el tema es relevante, aplicar similitud semántica
@@ -398,6 +425,31 @@ def simulador(
     
     costo_total = costo_solar + costo_eolica + costo_diesel
     
+    # Extraer columnas adicionales del DataFrame
+    acceso_dificil = zona_info["Acceso_dificil"]
+    potencial_pch = zona_info["Potencial_PCH"]
+    tipo_de_clima = zona_info["Tipo_de_clima"]
+    demanda_creciente = zona_info["Demanda_creciente"]
+    observaciones = zona_info["Observaciones"]
+    
+    # 🧠 Reglas automáticas basadas en la zona
+    recomendaciones = []
+
+    if acceso_dificil.lower() == "sí":
+        recomendaciones.append("📦 El acceso a esta zona es difícil, considere costos logísticos elevados.")
+
+    if potencial_pch.lower() == "alto":
+        recomendaciones.append("💧 Esta zona tiene un alto potencial para pequeñas centrales hidroeléctricas (PCH). Evalúe su viabilidad si hay fuentes hídricas cercanas.")
+
+    if tipo_de_clima.lower() in ["ecuatorial", "montaña húmeda"]:
+        recomendaciones.append("🌧️ Clima con alta nubosidad y lluvias frecuentes. Considere mantenimiento frecuente a sistemas solares.")
+
+    if demanda_creciente.lower() == "sí":
+        recomendaciones.append("⚠️ La demanda energética está creciendo en esta zona. Se recomienda sobredimensionar el sistema para evitar quedarse corto en el futuro.")
+
+    if observaciones:
+        recomendaciones.append(f"📝 Observación local: {observaciones}")
+
     return {
         "zona": str(zona_info["Zona"]),
         "irradiacion_solar": irradiacion,
@@ -416,6 +468,14 @@ def simulador(
             "diesel": round(costo_diesel, 2),
             "total": round(costo_total, 2)
         },
-        "consumo_estimado": consumo_estimado
+        "consumo_estimado": consumo_estimado,
+        
+        # 📌 NUEVAS COLUMNAS
+        "acceso_dificil": acceso_dificil,
+        "potencial_pch": potencial_pch,
+        "tipo_de_clima": tipo_de_clima,
+        "demanda_creciente": demanda_creciente,
+        "observaciones": observaciones,
+        "recomendaciones": recomendaciones
     }
 
