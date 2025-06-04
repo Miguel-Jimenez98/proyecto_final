@@ -77,7 +77,15 @@ faq_semantica_docs = [(nlp(preg), resp) for preg, resp in faq_semanticas.items()
 
 # Función que compara la pregunta del usuario con las preguntas frecuentes mediante similitud semántica
 def respuesta_semantica(pregunta_usuario):
-    doc_usuario = nlp(pregunta_usuario)
+    # ✅ Normalización: elimina tildes y convierte a minúsculas
+    texto_normalizado = ''.join(
+        c for c in unicodedata.normalize('NFD', pregunta_usuario)
+        if unicodedata.category(c) != 'Mn'
+    ).lower().strip()
+
+    # Usa el texto limpio para análisis semántico
+    doc_usuario = nlp(texto_normalizado)
+
     mejor_similitud = 0
     mejor_respuesta = None
     for doc_pregunta, respuesta in faq_semantica_docs:
@@ -85,7 +93,21 @@ def respuesta_semantica(pregunta_usuario):
         if similitud > mejor_similitud:
             mejor_similitud = similitud
             mejor_respuesta = respuesta
-    return mejor_respuesta if mejor_similitud >= 0.7 else None
+        # Validar también que la pregunta contenga términos relevantes
+    palabras_clave_validas = [
+        "microred", "solar", "panel", "fotovoltaico", "eolica", "viento", "turbina", 
+        "bateria", "almacenamiento", "inversor", "diesel", "diésel", "pch", 
+        "hidroelectrica", "energia", "generador", "offgrid", "autonomia", 
+        "hibrido", "zona", "instalacion", "consumo", "hidrogeno", "clima", "biomasa"
+    ]
+    
+    contiene_tema_relevante = any(p in texto_normalizado for p in palabras_clave_validas)
+
+    if mejor_similitud >= 0.7 and contiene_tema_relevante:
+        return mejor_respuesta
+    else:
+        return None
+
 
 
 # Inicialización de la API con FastAPI y configuración de CORS para permitir conexiones externas
@@ -222,7 +244,7 @@ def chatbot(query: str):
 
         # Reglas directas por combinación de palabras clave
         # Reglas comparativas ampliadas
-    if any(palabra in query_lower for palabra in ["mejor", "versus", "vs", "comparacion", "comparar", "mas eficiente", "eficiencia"]):
+    if any(palabra in query_lower for palabra in ["mejor", "versus", "vs", "comparacion", "comparar", "mas eficiente", "eficiencia", "eficiente"]):
         if "solar" in query_lower and "eolica" in query_lower:
             return JSONResponse(content={"respuesta": "La energía solar es más estable en zonas con alta irradiación como La Guajira, mientras que la eólica es útil en lugares con vientos constantes. Ambas pueden complementarse en un sistema híbrido."})
         elif "solar" in query_lower and "diesel" in query_lower:
@@ -236,12 +258,6 @@ def chatbot(query: str):
         elif "pch" in query_lower and "eolica" in query_lower:
             return JSONResponse(content={"respuesta": "La eólica depende del viento y puede complementarse con una PCH si se dispone de un río adecuado. Ambas pueden integrarse en sistemas híbridos según la geografía."})
 
-
-    # NUEVA regla específica: batería + solar
-    elif ("bateria" in query_lower or "almacenamiento" in query_lower) and "solar" in query_lower:
-        return JSONResponse(content={"respuesta": "Para energía solar, se recomiendan baterías de litio por su eficiencia y duración. Aunque son más costosas, ofrecen mejor rendimiento que las de plomo-ácido."})
-
-    # Reglas más generales
     elif "software" in query_lower or "herramienta" in query_lower:
         return JSONResponse(content={"respuesta": "Existen varios softwares para diseñar y simular microredes. Algunos populares son: HOMER Pro, PV*SOL, PVsyst y RETScreen. También estamos desarrollando esta plataforma para ayudarte sin necesidad de conocimientos técnicos."})
     elif "ley" in query_lower or "norma" in query_lower or "regulacion" in query_lower:
@@ -252,6 +268,12 @@ def chatbot(query: str):
         return JSONResponse(content={"respuesta": "Para instalar un sistema solar o híbrido verifica las normas locales. Los sistemas aislados no requieren tantos trámites. La UPME y operadores regionales pueden orientarte."})
     elif "curso" in query_lower or "aprender" in query_lower:
         return JSONResponse(content={"respuesta": "Puedes aprender sobre energías renovables en el SENA, Coursera, EdX y otras plataformas. Hay cursos gratuitos y diplomados disponibles."})
+
+    # NUEVA regla específica: batería + solar
+    elif ("bateria" in query_lower or "almacenamiento" in query_lower) and "solar" in query_lower:
+        return JSONResponse(content={"respuesta": "Para energía solar, se recomiendan baterías de litio por su eficiencia y duración. Aunque son más costosas, ofrecen mejor rendimiento que las de plomo-ácido."})
+
+    # Reglas más generales
     elif "panel" in query_lower and "cuanto" in query_lower:
         return JSONResponse(content={"respuesta": "El número de paneles depende de tu consumo y la irradiación solar en tu zona. Usa el simulador para una estimación personalizada."})
     elif "solar" in query_lower:
@@ -269,7 +291,7 @@ def chatbot(query: str):
         return JSONResponse(content={"respuesta": "Una PCH genera energía aprovechando el caudal de un río y un desnivel. Ideal en zonas como Chocó o Amazonas."})
     elif "precio" in query_lower or "cuánto cuesta" in query_lower or "retorno" in query_lower or "inversión" in query_lower:
         return JSONResponse(content={"respuesta": "El costo depende de la combinación elegida. Puedes recuperar la inversión en 3 a 7 años."})
-    elif "zona" in query_lower and "recomiendas" in query_lower:
+    elif "zona" in query_lower and "recomiendas" in query_lower and not any(normalizar_texto(z) in query_lower for z in zonas_df["Zona"]):
         return JSONResponse(content={"respuesta": "Cada zona tiene condiciones únicas. Por ejemplo, La Guajira es ideal para solar y eólica, y el Chocó para hídrica."})
     elif any(palabra in query_lower for palabra in [
     "que fuente", "no se que fuente", "cual es mejor", "que energia es mejor", 
@@ -294,11 +316,31 @@ def chatbot(query: str):
             else:
                 return JSONResponse(content={"respuesta": f"No hay observaciones especiales registradas para {fila['Zona']}."})
     
-    # Intentar detectar una zona y recomendar fuente de energía
-    for zona_nombre in zonas_df["Zona"]:
-        if normalizar_texto(zona_nombre) in query_lower:
-            respuesta = recomendar_fuente_energia(zona_nombre)
+    # Intentar detectar una zona y recomendar fuente de energía + reglas ambientales
+    for i, fila in zonas_df.iterrows():
+        if normalizar_texto(fila["Zona"]) in query_lower:
+            respuesta = recomendar_fuente_energia(fila["Zona"])
+
+            # Reglas condicionales adicionales con columnas normalizadas
+            if fila.get("Acceso_dificil_norm") == "si":
+                respuesta += " La zona tiene acceso difícil, lo cual puede dificultar el transporte de equipos. Se recomienda evaluar alternativas logísticas como transporte fluvial o aéreo."
+
+            if fila.get("Potencial_PCH_norm") == "alto":
+                respuesta += " Además, esta región tiene un alto potencial para pequeñas centrales hidroeléctricas (PCH), lo que puede ser una excelente fuente de energía complementaria si se cuenta con caudal disponible."
+
+            if fila.get("Tipo_de_clima_norm") == "ecuatorial":
+                respuesta += " El clima ecuatorial favorece notablemente la energía solar debido a su alta irradiación estable durante todo el año."
+            elif fila.get("Tipo_de_clima_norm") == "montana templada":
+                respuesta += " El clima de montaña templada implica variabilidad, por lo que es recomendable incorporar sistemas de respaldo como baterías o generadores diésel."
+
+            if fila.get("Demanda_creciente_norm") == "si":
+                respuesta += " Además, la zona presenta una demanda energética creciente. Esto sugiere que la microred debe planificarse con opciones de expansión futura."
+
+            if isinstance(fila.get("Observaciones"), str) and "biodiversidad" in normalizar_texto(fila["Observaciones"]):
+                respuesta += " Es relevante mencionar que esta zona presenta alta biodiversidad, lo cual puede tener implicaciones ambientales o regulatorias para el diseño energético."
+
             return JSONResponse(content={"respuesta": respuesta})
+
 
     # Si ninguna regla se cumple, se valida si el tema está relacionado con microredes
     palabras_clave_microred = [
@@ -307,15 +349,13 @@ def chatbot(query: str):
     "energia", "generador", "offgrid", "autonomia", "sistema hibrido", "zona", "instalacion"
     ]
 
-    if not any(palabra in query_lower for palabra in [normalizar_texto(p) for p in palabras_clave_microred]):
-        return JSONResponse(content={"respuesta": "Estoy diseñado para ayudarte con temas de microredes híbridas: paneles solares, baterías, turbinas eólicas o generadores. ¿Cómo puedo ayudarte?"})
-
-# Si el tema es relevante, aplicar similitud semántica
+    # Llamar respuesta semántica antes de la última respuesta general
     respuesta = respuesta_semantica(query_lower)
     if respuesta:
         return JSONResponse(content={"respuesta": respuesta})
-    else:
-        return JSONResponse(content={"respuesta": "Estoy aquí para ayudarte con microredes híbridas. Pregúntame sobre paneles, baterías, viento o zonas recomendadas."})
+
+    # Si ninguna regla se cumple y no hay coincidencia semántica (último fallback)
+    return JSONResponse(content={"respuesta": "Estoy diseñado para ayudarte con temas de microredes híbridas: paneles solares, baterías, turbinas eólicas o generadores. ¿Cómo puedo ayudarte?"})
 
 # Función auxiliar para asignar consumo según perfil
 def obtener_consumo_por_perfil(perfil):
