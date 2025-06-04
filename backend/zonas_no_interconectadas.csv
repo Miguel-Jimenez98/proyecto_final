@@ -1,33 +1,33 @@
 Zona,Irradiacion_solar,Velocidad_viento,Caudal_rio,Altura_salto,Consumo_promedio_kWh_dia,Acceso_dificil,Potencial_PCH,Tipo_de_clima,Demanda_creciente,Observaciones
-Amazonas,4.5,3.5,100.0,10.0,7.2,Sí,Medio,Ecuatorial,Sí,Acceso fluvial; biodiversidad alta
-Antioquia,4.8,2.8,383.0,112.9,8.0,No,Alto,Montaña templada,Sí,Buena infraestructura; zona montañosa
-Arauca,5.0,4.0,80.0,8.0,6.5,Sí,Medio,Sabana tropical,Sí,Región petrolera con retos logísticos
-Atlántico,5.8,6.0,0.0,0.0,7.0,No,Bajo,Tropical seco,Sí,Área urbana con buena conectividad
-Bolívar,5.5,5.0,200.0,10.0,7.5,No,Medio,Tropical seco,Sí,Desarrollo turístico creciente
-Boyacá,4.5,3.0,150.0,70.0,6.8,Sí,Alto,Montaña templada,Sí,Alta altitud; acceso irregular
-Caldas,4.6,3.5,120.0,60.0,6.9,Sí,Alto,Montaña templada,Sí,Zona cafetera con buen acceso
-Caquetá,4.5,3.5,1600.0,20.0,7.0,Sí,Alto,Ecuatorial,Sí,Baja densidad poblacional
-Casanare,5.2,4.5,100.0,8.0,6.5,No,Medio,Sabana tropical,Sí,Plano; vías en expansión
-Cauca,4.5,3.5,1350.0,15.0,7.0,Sí,Alto,Montaña húmeda,Sí,Diversidad climática; región indígena
-Cesar,6.2,3.0,80.0,12.0,7.0,No,Medio,Tropical seco,Sí,Potencial solar alto; acceso mixto
-Chocó,4.2,2.0,1022.0,15.0,6.5,Sí,Alto,Ecuatorial,Sí,Alto índice de lluvias
-Córdoba,5.5,4.0,100.0,10.0,7.2,No,Medio,Tropical húmedo,Sí,Zona ganadera con expansión eléctrica
-Cundinamarca,5.2,2.5,120.0,70.0,6.9,No,Alto,Montaña templada,Sí,Área desarrollada; demanda alta
-Guainía,4.5,3.0,100.0,10.0,6.5,Sí,Medio,Ecuatorial,Sí,Región selvática poco conectada
-Guaviare,4.5,3.5,100.0,10.0,6.5,Sí,Medio,Ecuatorial,Sí,Zona mixta rural
-Huila,5.0,3.5,2900.0,400.0,7.5,No,Alto,Montaña templada,Sí,Zona hidroeléctrica clave
-La Guajira,6.5,8.5,0.0,0.0,8.0,Sí,Bajo,Desértico,Sí,Región desértica con alto viento
-Magdalena,5.8,5.5,200.0,10.0,7.0,No,Medio,Tropical húmedo,Sí,Buena red vial; potencial solar
-Meta,5.0,3.5,200.0,10.0,7.5,No,Medio,Sabana tropical,Sí,Expansión agroindustrial
-Nariño,4.8,4.0,383.0,20.0,6.8,Sí,Alto,Montaña húmeda,Sí,Montañosa; difícil acceso
-Norte de Santander,5.2,4.0,150.0,10.0,6.9,No,Medio,Montaña húmeda,Sí,Zona minera y agrícola
-Putumayo,4.5,3.5,1500.0,15.0,6.5,Sí,Alto,Ecuatorial,Sí,Cobertura limitada de red
-Quindío,4.5,3.0,100.0,10.0,6.8,No,Medio,Montaña templada,Sí,Zona cafetera con buena demanda
-Risaralda,4.6,3.5,120.0,60.0,6.9,No,Alto,Montaña templada,Sí,Conectividad creciente
+Amazonas,3.7,1.8,12000.0,10.0,7.2,Sí,Medio,Ecuatorial,Sí,Acceso fluvial; biodiversidad alta
+Antioquia,4.8,3.8,8000.0,112.9,8.0,No,Alto,Montaña templada,Sí,Buena infraestructura; zona montañosa
+Arauca,3.2,1.3,5000.0,8.0,6.5,Sí,Medio,Sabana tropical,Sí,Región petrolera con retos logísticos
+Atlántico,5.3,5.5,800.0,0.0,7.0,No,Bajo,Tropical seco,Sí,Área urbana con buena conectividad
+Bolívar,5.2,5.0,600.0,10.0,7.5,No,Medio,Tropical seco,Sí,Desarrollo turístico creciente
+Boyacá,4.4,3.2,2500.0,70.0,6.8,Sí,Alto,Montaña templada,Sí,Alta altitud; acceso irregular
+Caldas,4.4,3.2,3000.0,60.0,6.9,Sí,Alto,Montaña templada,Sí,Zona cafetera con buen acceso
+Caquetá,4.0,2.9,7500.0,20.0,7.0,Sí,Alto,Ecuatorial,Sí,Baja densidad poblacional
+Casanare,4.3,3.0,6000.0,8.0,6.5,No,Medio,Sabana tropical,Sí,Plano; vías en expansión
+Cauca,4.0,2.5,1600.0,15.0,7.0,Sí,Alto,Montaña húmeda,Sí,Diversidad climática; región indígena
+Cesar,5.5,4.5,1000.0,12.0,7.0,No,Medio,Tropical seco,Sí,Potencial solar alto; acceso mixto
+Chocó,3.8,2.0,10000.0,15.0,6.5,Sí,Alto,Ecuatorial,Sí,Alto índice de lluvias
+Córdoba,4.9,4.0,100.0,10.0,7.2,No,Medio,Tropical húmedo,Sí,Zona ganadera con expansión eléctrica
+Cundinamarca,4.4,3.2,3000.0,70.0,6.9,No,Alto,Montaña templada,Sí,Área desarrollada; demanda alta
+Guainía,3.5,1.6,6000.0,10.0,6.5,Sí,Medio,Ecuatorial,Sí,Región selvática poco conectada
+Guaviare,3.4,1.5,5500.0,10.0,6.5,Sí,Medio,Ecuatorial,Sí,Zona mixta rural
+Huila,4.2,2.8,3500.0,400.0,7.5,No,Alto,Montaña templada,Sí,Zona hidroeléctrica clave
+La Guajira,6.0,7.0,1200.0,0.0,8.0,Sí,Bajo,Desértico,Sí,Región desértica con alto viento
+Magdalena,5.1,4.8,400.0,10.0,7.0,No,Medio,Tropical húmedo,Sí,Buena red vial; potencial solar
+Meta,4.5,3.3,7000.0,10.0,7.5,No,Medio,Sabana tropical,Sí,Expansión agroindustrial
+Nariño,3.9,2.3,1400.0,20.0,6.8,Sí,Alto,Montaña húmeda,Sí,Montañosa; difícil acceso
+Norte de Santander,4.6,3.5,2000.0,10.0,6.9,No,Medio,Montaña húmeda,Sí,Zona minera y agrícola
+Putumayo,3.1,1.2,4500.0,15.0,6.5,Sí,Alto,Ecuatorial,Sí,Cobertura limitada de red
+Quindío,4.4,3.2,3000.0,10.0,6.8,No,Medio,Montaña templada,Sí,Zona cafetera con buena demanda
+Risaralda,4.4,3.2,3000.0,60.0,6.9,No,Alto,Montaña templada,Sí,Conectividad creciente
 San Andrés y Providencia,5.5,6.0,0.0,0.0,7.0,No,Bajo,Tropical húmedo,Sí,Archipiélago; acceso marítimo
-Santander,5.0,3.5,200.0,10.0,7.2,No,Medio,Montaña templada,Sí,Zona montañosa desarrollada
-Sucre,5.5,4.5,100.0,10.0,7.0,No,Medio,Tropical seco,Sí,Turismo en crecimiento
-Tolima,5.0,3.5,200.0,10.0,7.0,No,Medio,Montaña templada,Sí,Zona agrícola e industrial
-Valle del Cauca,5.0,4.0,1350.0,15.0,7.5,No,Alto,Montaña húmeda,Sí,Industrial y agropecuaria
-Vaupés,4.5,3.0,100.0,10.0,6.5,Sí,Medio,Ecuatorial,Sí,Selva húmeda; poco acceso
-Vichada,5.1,4.5,50.0,8.0,6.0,Sí,Medio,Sabana tropical,Sí,Zona rural remota
+Santander,4.7,3.6,2500.0,10.0,7.2,No,Medio,Montaña templada,Sí,Zona montañosa desarrollada
+Sucre,5.0,4.3,200.0,10.0,7.0,No,Medio,Tropical seco,Sí,Turismo en crecimiento
+Tolima,4.3,3.0,4000.0,10.0,7.0,No,Medio,Montaña templada,Sí,Zona agrícola e industrial
+Valle del Cauca,4.1,2.7,1800.0,15.0,7.5,No,Alto,Montaña húmeda,Sí,Industrial y agropecuaria
+Vaupés,3.6,1.7,6500.0,10.0,6.5,Sí,Medio,Ecuatorial,Sí,Selva húmeda; poco acceso
+Vichada,3.3,1.4,5000.0,8.0,6.0,Sí,Medio,Sabana tropical,Sí,Zona rural remota

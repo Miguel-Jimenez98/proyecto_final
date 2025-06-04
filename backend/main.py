@@ -12,6 +12,13 @@ import unicodedata
 # Carga del modelo spaCy para el procesamiento en español
 nlp = spacy.load("es_core_news_md")
 
+# Normalización del texto para comparación robusta
+def normalizar_texto(texto):
+    return ''.join(
+        c for c in unicodedata.normalize('NFD', texto)
+        if unicodedata.category(c) != 'Mn'
+    ).lower()
+
 # Carga de los archivos CSV que contienen los datos de equipos y zonas
 # También se convierte la capacidad de los equipos a valor numérico para facilitar cálculos
 equipos_df = pd.read_csv("catalogo_equipos.csv")
@@ -19,6 +26,11 @@ equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').asty
 equipos_df["Eficiencia"] = equipos_df["Eficiencia"].astype(float)
 
 zonas_df = pd.read_csv("zonas_no_interconectadas.csv")
+# Normalización de columnas categóricas
+zonas_df['Acceso_dificil_norm'] = zonas_df['Acceso_dificil'].apply(normalizar_texto)
+zonas_df['Demanda_creciente_norm'] = zonas_df['Demanda_creciente'].apply(normalizar_texto)
+zonas_df['Potencial_PCH_norm'] = zonas_df['Potencial_PCH'].apply(normalizar_texto)
+zonas_df['Tipo_de_clima_norm'] = zonas_df['Tipo_de_clima'].apply(normalizar_texto)
 zonas_df["Zona"] = zonas_df["Zona"].str.strip()  # Eliminar espacios extra
 equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').astype(int)
 
@@ -80,12 +92,6 @@ def respuesta_semantica(pregunta_usuario):
 app = FastAPI(title="Plataforma de Microredes", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
-# Normalización del texto para comparación robusta
-def normalizar_texto(texto):
-    return ''.join(
-        c for c in unicodedata.normalize('NFD', texto)
-        if unicodedata.category(c) != 'Mn'
-    ).lower()
 
 #Función para encontrar zona más parecida en caso de que el usuario cometa errores menores en la escritura (Búsqueda difusa de zonas)
 def buscar_zona_similar(nombre_zona_usuario):
