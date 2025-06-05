@@ -1,18 +1,22 @@
 # Importaciones necesarias para la API y el manejo de datos
+
+# fastapi y submódulos: permiten contruir la API web, manejar solicitudes, y habilitar CORS.
 from fastapi import FastAPI, HTTPException, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, HTMLResponse
-import pandas as pd
-import math
-import spacy
-import re
+
+import pandas as pd # Para manipular datos tabulares (CSV)
+import math # Para cálculos matemáticos (por ejemplo, ceil())
+import spacy # Biblioteca de procesamiento de lenguaje natural, usada para similitud semántica
+import re # re: permite realizar búsquedas y manipulaciones de texto mediante expresiones regulares
 from difflib import get_close_matches #Importamos función que compara texto y retorna los elementos más similares dentro de la lista
-import unicodedata
+import unicodedata # Permite normalizar texto eliminando tildes y acentos.
 
 # Carga del modelo spaCy para el procesamiento en español
 nlp = spacy.load("es_core_news_md")
 
 # Normalización del texto para comparación robusta
+# Función para eliminar tildes y convertir texto a minúsculas (para comparar de forma más precisa)
 def normalizar_texto(texto):
     return ''.join(
         c for c in unicodedata.normalize('NFD', texto)
@@ -26,7 +30,8 @@ equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').asty
 equipos_df["Eficiencia"] = equipos_df["Eficiencia"].astype(float)
 
 zonas_df = pd.read_csv("zonas_no_interconectadas.csv")
-# Normalización de columnas categóricas
+
+# Se crean nuevas columnas normalizadas (sin tildes y en minúsculas) para facilitar comparaciones lógicas más adelante.
 zonas_df['Acceso_dificil_norm'] = zonas_df['Acceso_dificil'].apply(normalizar_texto)
 zonas_df['Demanda_creciente_norm'] = zonas_df['Demanda_creciente'].apply(normalizar_texto)
 zonas_df['Potencial_PCH_norm'] = zonas_df['Potencial_PCH'].apply(normalizar_texto)
@@ -34,7 +39,9 @@ zonas_df['Tipo_de_clima_norm'] = zonas_df['Tipo_de_clima'].apply(normalizar_text
 zonas_df["Zona"] = zonas_df["Zona"].str.strip()  # Eliminar espacios extra
 equipos_df["Capacidad_num"] = equipos_df["Capacidad"].str.extract(r'(\d+)').astype(int)
 
-# Diccionario con preguntas frecuentes y sus respuestas asociadas (Preguntas semánticas)
+
+# Diccionario clave-valor con preguntas frecuentes y sus respuestas asociadas (Preguntas semánticas)
+# Este bloque es utilizado para responder preguntas del usuario mediante análisis semántico.
 faq_semanticas = {
     # Este bloque contiene preguntas y respuestas técnicas frecuentes sobre energías renovables
     "¿Qué es una microred híbrida?": "Una microred híbrida combina varias fuentes de energía (solar, eólica, diésel, etc.) para asegurar un suministro estable, especialmente útil en zonas aisladas.",
@@ -73,9 +80,12 @@ faq_semanticas = {
     "¿Qué es la energía alternativa?": "La energía alternativa engloba fuentes de energía diferentes a las convencionales, como la solar, eólica, geotérmica y biomasa, que ofrecen opciones más sostenibles y menos contaminantes."
 }
 # Preprocesamiento de preguntas con spaCy para usar similitud semántica
+# Cada pregunta frecuente se convierte en un documento spaCy para calcular similitud semántica con las preguntas del usuario.
 faq_semantica_docs = [(nlp(preg), resp) for preg, resp in faq_semanticas.items()]
 
+
 # Función que compara la pregunta del usuario con las preguntas frecuentes mediante similitud semántica
+# Si la similitud es alta y la pregunta contiene palabras clave relevantes del dominio energético, devuelve una respuesta adecuada.
 def respuesta_semantica(pregunta_usuario):
     # ✅ Normalización: elimina tildes y convierte a minúsculas
     texto_normalizado = ''.join(
@@ -111,6 +121,7 @@ def respuesta_semantica(pregunta_usuario):
 
 
 # Inicialización de la API con FastAPI y configuración de CORS para permitir conexiones externas
+# Configurar CORS (permite que otras apps como frontend puedan comunicarse con esta API)
 app = FastAPI(title="Plataforma de Microredes", version="1.0")
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_credentials=True, allow_methods=["*"], allow_headers=["*"])
 
@@ -127,6 +138,7 @@ def buscar_zona_similar(nombre_zona_usuario):
         return zonas_df.loc[idx]
     else:
         return None
+
 
 # Función auxiliar para extraer valores numéricos de consumo (kWh) del texto del usuario
 def extraer_consumo(texto):
@@ -160,7 +172,7 @@ def detectar_tipo_instalacion(texto):
     return None, None
 
 
-# Función que recomienda una fuente de energía según las condiciones técnicas de la zona especificada
+# Recomienda una o varias fuentes energéticas ideales (solar, eólica, PCH) en función de las condiciones técnicas de una zona específica.
 def recomendar_fuente_energia(zona_nombre):
     zona_normalizada = normalizar_texto(zona_nombre)
     zona = zonas_df[zonas_df["Zona"].apply(lambda z: normalizar_texto(z)) == zona_normalizada]
@@ -306,7 +318,7 @@ def chatbot(query: str):
     elif "ayuda" in query_lower or "no se" in query_lower:
         return JSONResponse(content={"respuesta": "Puedo ayudarte con solar, eólica, baterías o diésel. También puedes usar el simulador."})
     
-    # ✅ Mostrar observaciones específicas si se pregunta por ellas
+    # Mostrar observaciones específicas si se pregunta por ellas
     for i, fila in zonas_df.iterrows():
         zona_normalizada = normalizar_texto(fila["Zona"])
         if zona_normalizada in query_lower and any(palabra in query_lower for palabra in ["observacion", "observación", "caracteristica", "característica", "particularidad"]):
@@ -357,7 +369,7 @@ def chatbot(query: str):
     # Si ninguna regla se cumple y no hay coincidencia semántica (último fallback)
     return JSONResponse(content={"respuesta": "Estoy diseñado para ayudarte con temas de microredes híbridas: paneles solares, baterías, turbinas eólicas o generadores. ¿Cómo puedo ayudarte?"})
 
-# Función auxiliar para asignar consumo según perfil
+# Función auxiliar que devuelve un valor de consumo típico según el tipo de perfil especificado (ej: casa, escuela, salud).
 def obtener_consumo_por_perfil(perfil):
     perfiles = {
         "casa": 9,
@@ -368,7 +380,7 @@ def obtener_consumo_por_perfil(perfil):
     }
     return perfiles.get(perfil.lower(), None)
 
-# Ruta para simular una configuración energética basada en zona, consumo o perfil
+# Ruta para simular una microred híbrida personalizada según zona, consumo, perfil, y requerimientos de autonomía.
 @app.get("/simulador", tags=["Simulador"])
 def simulador(
     location: str,
@@ -420,7 +432,7 @@ def simulador(
             "consumo_estimado": False
         }
     
-    # Selección de los equipos (elegimos el primero por tipo como hasta ahora)
+    # Selección de los equipos (elegimos el primero por tipo para simplificación)
     panel = equipos_df[equipos_df["Tipo"] == "Panel Solar"].iloc[0]
     bateria = equipos_df[equipos_df["Tipo"] == "Batería"].iloc[0]
     inversor = equipos_df[equipos_df["Tipo"] == "Inversor"].iloc[0]
@@ -431,6 +443,7 @@ def simulador(
     eficiencia_panel = panel["Eficiencia"] / 100
     eficiencia_bateria = bateria["Eficiencia"] / 100
     eficiencia_eolica = eolica["Eficiencia"] / 100
+    
     # Definimos la eficiencia del inversor (95%) y del cableado (97%)
     # Estas eficiencias representan la proporción de energía que realmente llega al sistema luego de las pérdidas por conversión y distribución
     eficiencia_inversor = 0.95
@@ -439,13 +452,14 @@ def simulador(
     # Ajustamos el consumo requerido para compensar las pérdidas por conversión
     # Si el usuario necesita 6.5 kWh, debemos generar más para cubrir lo que se pierde en el inversor y el cableado
     consumo_real = consumo / (eficiencia_inversor * eficiencia_cableado)
+    
     # Convertimos el consumo real de kWh a Wh para los cálculos posteriores
     consumo_diario_wh = consumo_real * 1000
 
     # Cálculo paneles considerando eficiencia
     n_paneles = math.ceil(consumo_diario_wh / (panel["Capacidad_num"] * irradiacion * eficiencia_panel))
     
-    # ⚡️ Solo se calcula autonomía si el usuario lo pide
+    # Solo se calcula autonomía si el usuario lo pide
     if incluir_autonomia:
         energia_autonomia_wh = consumo_diario_wh * autonomia
     else:
@@ -466,7 +480,7 @@ def simulador(
         n_turbinas = 0
         costo_eolica = 0
 
-    incluye_diesel = True
+    incluye_diesel = True #Para simplificación siempre se calcula con respaldo diesel, a futuro se puede refinar
     costo_diesel = float(diesel["Precio (USD)"])
     
     costo_total = costo_solar + costo_eolica + costo_diesel
@@ -478,7 +492,7 @@ def simulador(
     demanda_creciente = zona_info["Demanda_creciente"]
     observaciones = zona_info["Observaciones"]
     
-    # 🧠 Reglas automáticas basadas en la zona
+    # Reglas automáticas basadas en la zona
     recomendaciones = []
 
     if acceso_dificil.lower() == "sí":
@@ -516,7 +530,7 @@ def simulador(
         },
         "consumo_estimado": consumo_estimado,
         
-        # 📌 NUEVAS COLUMNAS
+        # NUEVAS COLUMNAS
         "acceso_dificil": acceso_dificil,
         "potencial_pch": potencial_pch,
         "tipo_de_clima": tipo_de_clima,
