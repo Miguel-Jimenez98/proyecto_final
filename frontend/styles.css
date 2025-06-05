@@ -1,16 +1,24 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap');
+
+
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Poppins', sans-serif;
   padding: 20px;
-  background-color: #f4f4f4;
+  background-color: #F4F6F7; /* gris claro temático */
+  color: #333; /* texto más suave */
+  margin: 0;
 }
+
 
 section {
   margin-bottom: 30px;
   padding: 20px;
-  background: white;
+  background-color: #ffffff;
   border-radius: 10px;
-  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1); /* sombra más suave y elegante */
+  border-left: 6px solid #A8D5BA; /* acento verde claro */
 }
+
 
 input, select, button {
   display: block;
@@ -19,3 +27,246 @@ input, select, button {
   width: 100%;
   max-width: 400px;
 }
+
+/* Mejora visual específica para inputs y selects */
+input[type="text"],
+input[type="number"],
+select {
+  background-color: #f8f8f8;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 14px;
+  padding: 10px;
+  transition: border-color 0.3s ease;
+}
+
+input[type="text"]:focus,
+input[type="number"]:focus,
+select:focus {
+  border-color: #2E7D32;
+  outline: none;
+}
+
+
+button {
+  background-color: #2E7D32; /* verde oscuro - energía */
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  font-weight: 600;
+  margin-top: 8px; /* NUEVA LÍNEA para separación uniforme */
+}
+
+button:hover {
+  background-color: #1565C0; /* azul tecnológico */
+}
+
+.chatbox, .simulador-box {
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+h1 {
+  color: #1565C0;
+  font-weight: 700;
+  text-align: center;
+}
+
+h2, h4 {
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.hero {
+  position: relative;
+  width: 100%;
+  height: 300px;
+  background-image: url('img/eolica.jpg'); /* sin tilde por compatibilidad */
+  background-size: cover;
+  background-position: center;
+  border-radius: 0 0 12px 12px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+}
+
+.overlay {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.45); /* oscurece la imagen */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.hero h1 {
+  color: #ffffff;
+  font-size: 2.4em;
+  text-align: center;
+  text-shadow: 2px 2px 6px rgba(0, 0, 0, 0.6);
+  padding: 0 20px;
+}
+
+.guia-chatbot, .guia-simulador {
+  background-color: #E8F5E9;
+  border-left: 4px solid #2E7D32;
+  padding: 15px;
+  border-radius: 10px;
+  margin-top: 10px;
+  font-size: 14px;
+  color: #333;
+}
+
+.guia-chatbot h4, .guia-simulador h4 {
+  margin-top: 0;
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.guia-chatbot ul, .guia-simulador ul {
+  padding-left: 20px;
+}
+
+.guia-chatbot li, .guia-simulador li {
+  margin-bottom: 6px;
+}
+
+button[type="button"] {
+  background-color: #00897B;
+  margin-top: 10px;
+  font-size: 0.95em;
+}
+
+button[type="button"]:hover {
+  background-color: #00695C;
+}
+
+.grafico-centro {
+  width: 100% !important;
+  max-width: 500px;
+  min-height: 300px;
+  margin: 20px auto;
+  display: block;
+}
+
+.resultado-card {
+  background-color: #fefefe;
+  border-left: 5px solid #42a5f5;
+  border-radius: 10px;
+  padding: 20px;
+  margin-top: 20px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
+  font-size: 15px;
+  color: #333;
+}
+
+.resultado-card h4 {
+  margin-top: 20px;
+  color: #1565C0;
+  font-weight: 600;
+}
+
+.lista-recomendaciones {
+  background-color: #e3f2fd;
+  border-left: 4px solid #1976D2;
+  padding: 10px 15px;
+  border-radius: 6px;
+  margin-top: 10px;
+  list-style: disc;
+}
+
+.lista-recomendaciones li {
+  margin-bottom: 8px;
+  padding-left: 4px;
+}
+
+.subtitulo {
+  color: #ffffff;
+  font-size: 1em;
+  text-align: center;
+  margin-top: 10px;
+  opacity: 0.9;
+}
+
+.titulo-chatbot {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.titulo-chatbot img.icono-titulo {
+  width: 36px;
+  height: 36px;
+}
+
+.titulo-chatbot h2 {
+  margin: 0;
+  font-size: 1.5em;
+  color: #2E7D32;
+  font-weight: 600;
+}
+
+.resultado-card {
+  background-color: #ffffff;
+  border-left: 5px solid #2E7D32;
+  padding: 25px;
+  margin-top: 30px;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  font-size: 15px;
+  color: #333;
+}
+
+.resultado-card h3 {
+  color: #1565C0;
+  margin-bottom: 15px;
+  font-size: 1.3em;
+}
+
+.resultado-card h4 {
+  margin-top: 20px;
+  color: #2E7D32;
+  font-weight: 600;
+  font-size: 1.1em;
+}
+
+.resultado-card ul {
+  list-style: disc;
+  margin-left: 20px;
+  margin-bottom: 10px;
+}
+
+.resultado-card p {
+  margin-bottom: 8px;
+}
+
+.resultado-card li {
+  margin-bottom: 6px;
+}
+
+.resultado-card .resaltado {
+  background-color: #f0f8f5;
+  padding: 8px;
+  border-left: 4px solid #2E7D32;
+  margin-top: 10px;
+  border-radius: 6px;
+}
+
+.resultado-card .nota {
+  font-style: italic;
+  font-size: 0.9em;
+  color: #555;
+  margin-top: 12px;
+}
+
+.resultado-card .warning {
+  color: #e67e22;
+  font-weight: bold;
+}
+

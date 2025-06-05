@@ -40,53 +40,54 @@ document.getElementById("designForm").addEventListener("submit", async function(
   const resultadoDiv = document.getElementById("resultadoSimulacion");
 
   resultadoDiv.innerHTML = `
-    <h3>🔍 Resultados para ${data.zona}</h3>
-    <p><strong>Irradiación Solar:</strong> ${data.irradiacion_solar} kWh/m²/día</p>
-    <p><strong>Velocidad del Viento:</strong> ${data.viento} m/s</p>
-    <p><strong>Consumo Diario:</strong> ${data.consumo_diario_kwh} kWh</p>
+    <div class="resultado-card">
+      <h3>🔍 Resultados para ${data.zona}</h3>
+      <p><strong>Irradiación Solar:</strong> ${data.irradiacion_solar} kWh/m²/día</p>
+      <p><strong>Velocidad del Viento:</strong> ${data.viento} m/s</p>
+      <p><strong>Consumo Diario:</strong> ${data.consumo_diario_kwh} kWh</p>
 
-    <h4>🌍 Información del Entorno</h4>
-    <ul>
-      <li><strong>Acceso Difícil:</strong> ${data.acceso_dificil}</li>
-      <li><strong>Potencial PCH:</strong> ${data.potencial_pch}</li>
-      <li><strong>Tipo de Clima:</strong> ${data.tipo_de_clima}</li>
-      <li><strong>Demanda Creciente:</strong> ${data.demanda_creciente}</li>
-      <li><strong>Observaciones:</strong> ${data.observaciones}</li>
-    </ul>
-
-    ${data.nota
-      ? `<p style="${
-          data.nota.includes("⚠️")
-            ? "color: #e67e22; font-weight: bold;"
-            : "font-size: 0.9em; font-style: italic; color: #555;"
-        }"><strong>Nota:</strong> ${data.nota}</p>`
-    : ""}
-    ${data.consumo_estimado ? "<p style='color: #aa7700; font-style: italic;'>⚠️ El consumo fue estimado automáticamente según el perfil seleccionado.</p>" : ""}
-
-
-    <h4>⚙️ Configuración Recomendada</h4>
-    <ul>
-      <li><strong>Paneles Solares:</strong> ${data.configuracion_recomendada.paneles_solares}</li>
-      <li><strong>Baterías:</strong> ${data.configuracion_recomendada.baterias}</li>
-      <li><strong>Turbinas Eólicas:</strong> ${data.configuracion_recomendada.turbinas_eolicas}</li>
-      <li><strong>¿Incluir Diésel?:</strong> ${data.configuracion_recomendada.incluir_diesel ? "Sí" : "No"}</li>
-    </ul>
-
-    <h4>💲 Costos Estimados (USD)</h4>
-    <ul>
-      <li><strong>Solar:</strong> $${data.costos_estimados_usd.solar}</li>
-      <li><strong>Eólica:</strong> ${data.costos_estimados_usd.eolica === "No aplica" ? "No aplica" : "$" + data.costos_estimados_usd.eolica}</li>
-      <li><strong>Diésel:</strong> $${data.costos_estimados_usd.diesel}</li>
-      <li><strong>Total:</strong> <strong>$${data.costos_estimados_usd.total}</strong></li>
-    </ul>
-
-    ${data.recomendaciones && data.recomendaciones.length > 0 ? `
-      <h4>📌 Recomendaciones Técnicas</h4>
-      <ul style="background-color: #f9f9f9; padding: 10px; border-left: 5px solid #3498db;">
-        ${data.recomendaciones.map(r => `<li style="margin-bottom: 6px;">${r}</li>`).join("")}
+      <h4>🌍 Información del Entorno</h4>
+      <ul>
+        <li><strong>Acceso Difícil:</strong> ${data.acceso_dificil}</li>
+        <li><strong>Potencial PCH:</strong> ${data.potencial_pch}</li>
+        <li><strong>Tipo de Clima:</strong> ${data.tipo_de_clima}</li>
+        <li><strong>Demanda Creciente:</strong> ${data.demanda_creciente}</li>
+        <li><strong>Observaciones:</strong> ${data.observaciones}</li>
       </ul>
-    ` : ""}
 
+      ${data.nota
+        ? `<p style="${
+            data.nota.includes("⚠️")
+              ? "color: #e67e22; font-weight: bold;"
+              : "font-size: 0.9em; font-style: italic; color: #555;"
+          }"><strong>Nota:</strong> ${data.nota}</p>`
+      : ""}
+      ${data.consumo_estimado ? "<p style='color: #aa7700; font-style: italic;'>⚠️ El consumo fue estimado automáticamente según el perfil seleccionado.</p>" : ""}
+
+
+      <h4>⚙️ Configuración Recomendada</h4>
+      <ul>
+        <li><strong>Paneles Solares:</strong> ${data.configuracion_recomendada.paneles_solares}</li>
+        <li><strong>Baterías:</strong> ${data.configuracion_recomendada.baterias}</li>
+        <li><strong>Turbinas Eólicas:</strong> ${data.configuracion_recomendada.turbinas_eolicas}</li>
+        <li><strong>¿Incluir Diésel?:</strong> ${data.configuracion_recomendada.incluir_diesel ? "Sí" : "No"}</li>
+      </ul>
+
+      <h4>💲 Costos Estimados (USD)</h4>
+      <ul>
+        <li><strong>Solar:</strong> $${data.costos_estimados_usd.solar}</li>
+        <li><strong>Eólica:</strong> ${data.costos_estimados_usd.eolica === "No aplica" ? "No aplica" : "$" + data.costos_estimados_usd.eolica}</li>
+        <li><strong>Diésel:</strong> $${data.costos_estimados_usd.diesel}</li>
+        <li><strong>Total:</strong> <strong>$${data.costos_estimados_usd.total}</strong></li>
+      </ul>
+
+      ${data.recomendaciones && data.recomendaciones.length > 0 ? `
+        <h4>📌 Recomendaciones Técnicas</h4>
+        <ul class="lista-recomendaciones">
+          ${data.recomendaciones.map(r => `<li style="margin-bottom: 6px;">${r}</li>`).join("")}
+        </ul>
+      ` : ""}
+    </div>
   `;
 
     // 🎯 Generar gráfico de barras con Chart.js
@@ -137,6 +138,8 @@ document.getElementById("designForm").addEventListener("submit", async function(
     }
   });
 
+  document.getElementById("contenedorCostos").style.display = "block"; // <-- NUEVA LÍNEA
+
 // 🎯 Segundo gráfico: Distribución porcentual de costos
 const ctx2 = document.getElementById("graficoContribucion").getContext("2d");
 
@@ -183,6 +186,8 @@ if (total > 0) {
       }
     }
   });
+  document.getElementById("contenedorContribucion").style.display = "block"; // <-- NUEVA LÍNEA
+
 }
 
 });

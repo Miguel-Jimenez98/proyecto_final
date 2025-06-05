@@ -9,16 +9,40 @@
 </head>
 
 <body>
-  <h1>🌎 Plataforma de Microredes Híbridas</h1>
+  <header class="hero">
+    <div class="overlay">
+      <div>
+        <h1>🌎 Plataforma de Microredes Híbridas</h1>
+        <p class="subtitulo">Simula, diseña y aprende sobre energías limpias</p>
+      </div>
+    </div>
+  </header>
 
-  <section id="chatbot">
-    <h2>🤖 Asistente Inteligente</h2>
+
+
+  <section id="chatbot" class="chatbox">
+    <div class="titulo-chatbot">
+      <img src="https://cdn-icons-png.flaticon.com/512/4712/4712106.png" alt="Robot Icon" class="icono-titulo">
+      <h2>Asistente Inteligente de Energía</h2>
+    </div>
     <input type="text" id="userInput" placeholder="Escribe tu pregunta aquí...">
     <button onclick="sendQuestion()">Enviar</button>
     <div id="chatResponse"></div>
+    <!-- Guía para el chatbot -->
+    <div class="guia-chatbot">
+      <h4>💡 Preguntas frecuentes:</h4>
+      <ul>
+        <li>¿Qué es una microred híbrida?</li>
+        <li>¿Qué es la energía azul?</li>
+        <li>¿Qué tipo de batería me conviene?</li>
+        <li>¿Cúal fuente es mejor solar o eólica?</li>
+        <li>¿Cómo saber si mi zona es apta para solar?</li>
+        <li>¿Qué tipo de instalación me recomiendas para un puesto de salud?</li>
+      </ul>
+    </div>
   </section>
 
-<section id="formulario">
+<section id="formulario" class="simulador-box">
   <h2>⚡ Diseña tu Microred</h2>
   <form id="designForm">
     <label>Ubicación:</label>
@@ -51,23 +75,57 @@
 
   <div id="resultadoSimulacion"></div>
 
-  <div style="margin-top: 20px;">
-    <h4>📊 Gráfico de Costos</h4>
-    <canvas id="graficoCostos" width="400" height="300"></canvas>
+  <!-- Botón y contenedor del gráfico de Costos -->
+  <div style="margin-top: 20px; text-align: center;">
+    <button type="button" onclick="toggleGrafico('graficoCostos')">📊 Ver/ocultar gráfico de Costos</button>
+    <div id="contenedorCostos" style="display: none; margin-top: 10px;">
+      <canvas id="graficoCostos" class="grafico-centro"></canvas>
+    </div>
   </div>
-  <div style="margin-top: 20px;">
-  <h4>🔄 Distribución de Costos por Fuente</h4>
-  <canvas id="graficoContribucion" width="400" height="300"></canvas>
+
+<!-- Botón y contenedor del gráfico de Contribución -->
+  <div style="margin-top: 20px; text-align: center;">
+    <button type="button" onclick="toggleGrafico('graficoContribucion')">🔄 Ver/ocultar gráfico por Fuente</button>
+    <div id="contenedorContribucion" style="display: none; margin-top: 10px;">
+      <canvas id="graficoContribucion" class="grafico-centro"></canvas>
+    </div>
+  </div>
+
+
+  <!-- Guía para el simulador -->
+  <div class="guia-simulador">
+    <h4>🛠 Cómo usar el simulador:</h4>
+    <ul>
+      <li>Ingresa el nombre de una zona (ej. La Guajira).</li>
+      <li>Indica tu consumo diario en kWh (opcional).</li>
+      <li>Selecciona el tipo de instalación si lo conoces.</li>
+      <li>Activa la autonomía si deseas que el sistema funcione días sin sol/viento.</li>
+      <li>Haz clic en "Simular" para ver las recomendaciones.</li>
+    </ul>
   </div>
 
 </section>
 
-  <script src="chatbot.js"></script>
-  <script src="diseño.js"></script>
   <script>
-  document.getElementById("incluirAutonomia").addEventListener("change", function() {
-    document.getElementById("diasAutonomiaLabel").style.display = this.checked ? "block" : "none";
-  });
-</script>
+  // Asegura que todo el DOM esté cargado antes de ejecutar cualquier lógica
+    document.addEventListener("DOMContentLoaded", () => {
+    // Listener para mostrar el campo de días de autonomía
+      document.getElementById("incluirAutonomia").addEventListener("change", function () {
+        document.getElementById("diasAutonomiaLabel").style.display = this.checked ? "block" : "none";
+    });
+    // Función para alternar visibilidad de gráficos
+      window.toggleGrafico = function(id) {
+        const contenedor = document.getElementById(
+          id === "graficoCostos" ? "contenedorCostos" : "contenedorContribucion"
+        );
+        contenedor.style.display = contenedor.style.display === "none" ? "block" : "none";
+      };
+    });
+  </script>
+
+<!-- Scripts finales cargados después de asegurar el DOM -->
+<script src="chatbot.js"></script>
+<script src="diseño.js"></script>
+
 </body>
 </html>
